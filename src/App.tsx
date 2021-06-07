@@ -1,9 +1,11 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { io } from 'socket.io-client';
 import { Container, Row } from 'react-bootstrap';
 import EnterUsername from './components/EnterUsername';
 import ConnectedUsers from './components/connectedUsers/ConnectedUsers';
+
+const socketClient = io('http://localhost:5000');
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -11,21 +13,22 @@ function App() {
   const [connectedUsers, setConnectedUsers] = useState(
     [] as { id: string; userName: string }[]
   );
-  const socketClient = useRef<any>();
+  const [messages, setMessages] = useState(
+    [] as { message: string; userName: string }[]
+  );
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    socketClient.current = io('http://localhost:5000');
-
-    if (socketClient.current) {
-      socketClient.current.on('username-taken', () => {
+    if (socketClient) {
+      socketClient.on('username-taken', () => {
         toast.error('Username taken');
       });
 
-      socketClient.current.on('username-submitted-successfully', () => {
+      socketClient.on('username-submitted-successfully', () => {
         setConnected(true);
       });
 
-      socketClient.current.on(
+      socketClient.on(
         'get-connected-users',
         (connectedUsers: { id: string; userName: string }[]) => {
           console.log(connectedUsers);
@@ -34,13 +37,19 @@ function App() {
           );
         }
       );
+
+      socketClient.on(
+        'receive-message',
+        (message: { message: string; userName: string }) => {
+          setMessages((prev) => [...prev, message]);
+        }
+      );
     }
-    return () => {};
   }, [userName]);
 
   const handleConnection = () => {
-    if (socketClient.current) {
-      socketClient.current.emit('handle-connection', userName);
+    if (socketClient) {
+      socketClient.emit('handle-connection', userName);
     }
   };
 
