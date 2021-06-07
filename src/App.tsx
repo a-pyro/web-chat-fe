@@ -13,6 +13,7 @@ function App() {
   const [connectedUsers, setConnectedUsers] = useState(
     [] as { id: string; userName: string }[]
   );
+
   const [messages, setMessages] = useState(
     [] as { message: string; userName: string }[]
   );
